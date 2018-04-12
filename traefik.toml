@@ -1,0 +1,29 @@
+defaultEntryPoints = ["http", "https"]
+
+logLevel = "INFO"
+
+[web]
+address = ":8080"
+  [web.auth.basic]
+  users = ["admin:$apr1$e8Mj5xUm$.Fwp2cWEJm1JVBidbYtno1"] # change this with 'htpasswd -nb admin your_secure_password'
+
+[accessLog]
+ format = "json"
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+    [entryPoints.http.redirect]
+    entryPoint = "https"
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+
+[acme]
+email = "contact@example.com"
+storage = "acme.json"
+entryPoint = "https"
+onHostRule = true
+onDemand = false
+
+[acme.httpChallenge]
+entryPoint = "http"

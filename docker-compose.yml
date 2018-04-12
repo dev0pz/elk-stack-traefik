@@ -1,0 +1,94 @@
+version: '3.3'
+
+networks:
+  my_log_net:
+    external: true
+
+volumes:
+  es_data:
+    driver: local
+
+services:
+
+  logspout:
+    image: gliderlabs/logspout
+    command: 'syslog+tcp://logstash:5000?filter.name=*traefik*'
+    restart: unless-stopped
+    environment:
+      - LOGSPOUT=ignore
+    networks:
+      - my_log_net
+    links:
+      - logstash
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      mode: replicated
+      # scale this one to spawn one per node
+      replicas: 1
+      placement:
+        preferences:
+          - spread : node
+
+
+  logstash:
+    image: devopz/logstash-json-traefik:6.2.3
+    environment:
+      - LOGSPOUT=ignore
+      - DROP_NON_JSON=false
+      - STDOUT=true
+    links:
+      - elasticsearch
+    ports:
+      - 5000:5000
+    networks:
+      - my_log_net
+    deploy:
+      mode: replicated
+      replicas: 1
+      # Modify this to enforce the spawning of the ELK stack on some specific host
+#      placement:
+#        constraints:
+#          - node.hostname == xxx
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:6.2.3
+    networks:
+      - my_log_net
+    environment:
+      - LOGSPOUT=ignore
+    links:
+      - elasticsearch
+    # setup some ssh tunnel to 5601 on master node to safely browse Kibana
+    ports:
+      - 5601:5601
+    deploy:
+      mode: replicated
+      replicas: 1
+#      placement:
+#        constraints:
+#          - node.hostname == xxx
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.2.3
+    networks:
+      - my_log_net
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    environment:
+      - http.host=0.0.0.0
+      - transport.host=localhost
+      - network.host=0.0.0.0
+      # Disable X-Pack security: https://www.elastic.co/guide/en/elasticsearch/reference/5.5/security-settings.html#general-security-settings
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - LOGSPOUT=ignore
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+      mode: replicated
+      replicas: 1
+#      placement:
+#        constraints:
+#          - node.hostname == xxx
