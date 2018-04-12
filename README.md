@@ -23,7 +23,7 @@ and then:
 
 
 ##### notes:
-[Logstash Image at DockHub](https://hub.docker.com/r/devopz/logstash-json-traefik/)
+[Logstash Image at Docker Hub](https://hub.docker.com/r/devopz/logstash-json-traefik/)
 
 ---
 <br />
