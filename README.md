@@ -37,9 +37,12 @@ Example:
 `touch acme.json ; chmod 0600 acme.json`
 
 <br />
+
 `docker run -d -v /var/run/docker.sock:/var/run/docker.sock -v $PWD/traefik.toml:/traefik.toml -v $PWD/acme.json:/acme.json -p 80:80 -p 443:443 --network my_log_net --name traefik traefik --docker`
 
+
 <br />
+
 > (use `--network my_log_net` for your traefik backends)
 
 <br />
